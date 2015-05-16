@@ -31,7 +31,8 @@ public class SeekerControl extends AbstractControl {
     private Spatial player;
     private Vector3f velocity;
     private long spawnTime;
-    private int screenWidth, screenHeight;
+    private int screenWidth, screenHeight;    
+    public static final String RADIUS = "radius";
     
     public SeekerControl(Spatial player, int screenWidth, int screenHeight) {
         this.player = player;
@@ -68,10 +69,10 @@ public class SeekerControl extends AbstractControl {
             pic.getMaterial().setColor("Color", color);
         }
         Vector3f loc = spatial.getLocalTranslation();
-        if (loc.x > screenWidth || 
-            loc.y > screenHeight ||
-            loc.x < 0 ||
-            loc.y < 0) {
+        if (loc.x > screenWidth + 10 || 
+            loc.y > screenHeight + 10 ||
+            loc.x - 10 < 0 ||
+            loc.y - 10 < 0) {
             spatial.removeFromParent();
         }
     }
@@ -107,4 +108,5 @@ public class SeekerControl extends AbstractControl {
         //out.write(this.value, "name", defaultValue);
     }
     public Vector3f getVector() { return velocity; }
+    public float getRadius() { return spatial.getUserData(RADIUS); }
 }
