@@ -13,6 +13,7 @@ import com.jme3.input.InputManager;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.material.Material;
 import com.jme3.material.RenderState;
+import com.jme3.math.FastMath;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
@@ -39,6 +40,8 @@ public class GameAppState extends AbstractAppState implements ActionListener {
     private Node guiNode;
     private Node playerNode;
     private Node playerNodeForUpdate;
+    private Node rainNodeForUpdate;
+    private Node rainNode;
     
     public boolean readyForUpdates = false;
     
@@ -59,7 +62,8 @@ public class GameAppState extends AbstractAppState implements ActionListener {
         
         playerNode = new Node();
         guiNode.attachChild(playerNode);
-        
+        rainNode = new Node();
+        guiNode.attachChild(rainNode);
         readyForUpdates = true;
         ((ClientMain)app).sendNewPlayerMessage();
         
@@ -69,6 +73,7 @@ public class GameAppState extends AbstractAppState implements ActionListener {
     @Override
     public void update(float tpf) {
         updatePlayerNode();
+        updateRainNode();
     }
     
     @Override
@@ -99,7 +104,28 @@ public class GameAppState extends AbstractAppState implements ActionListener {
             }
         }
     }
-    
+    public synchronized void updateRainNode(RainNodeState state) {
+        if (rainNodeForUpdate == null) rainNodeForUpdate = new Node();
+        if (state.shouldNodeReset()) {
+            rainNodeForUpdate.detachAllChildren();
+            System.out.println("Updating...");
+            for (int i = 0; i < state.getRainNum(); i++) {
+                System.out.println(state.getPos(i).x);
+                rainNodeForUpdate.attachChild(createRain(state.getPos(i), state.getVector(i)));
+            }
+        } else {
+            for (int i = 0; i < state.getRainNum(); i++) {
+                updateRain(i, state.getPos(i), state.getVector(i));
+            }
+        }
+    }
+    public synchronized void updateRainNode() {
+        if (rainNodeForUpdate != null) {
+            rainNode.detachAllChildren();
+            for (int i = 0; i < rainNodeForUpdate.getQuantity(); i++) rainNode.attachChild(rainNodeForUpdate.getChild(i).clone());
+            //guiNode.attachChild(playerNode);
+        }
+    }
     public synchronized void updatePlayerNode() {
         if (playerNodeForUpdate != null) {
             playerNode.detachAllChildren();
@@ -109,7 +135,7 @@ public class GameAppState extends AbstractAppState implements ActionListener {
     }
     
     public Spatial createPlayer(int playerID, Vector3f position, float rotation, int wins, boolean lifeStatus) {
-        Spatial newPlayer = getSpatial("Player");
+        Spatial newPlayer = getSpatial("Player1");
         //newPlayer.addControl(new PlayerControl());
         //newPlayer.getControl(PlayerControl.class).setClientID(playerID);
         newPlayer.move(position);
@@ -120,12 +146,33 @@ public class GameAppState extends AbstractAppState implements ActionListener {
         return newPlayer;
     }
     
+    public Spatial createRain (Vector3f position, Vector3f velocity) {
+        Spatial newRain = getSpatial("Rain");
+        //newPlayer.addControl(new PlayerControl());
+        //newPlayer.getControl(PlayerControl.class).setClientID(playerID);       
+        newRain.rotateUpTo(velocity.normalize());
+        newRain.rotate(0,0,FastMath.PI/2f);
+        newRain.move(position);
+        //newPlayer.getControl(PlayerControl.class).faceTo(rotation);
+        //newPlayer.getControl(PlayerControl.class).setWins(wins);
+        //newPlayer.getControl(PlayerControl.class).setLifeStatus(lifeStatus);
+        return newRain;
+    }
+    
     public void updatePlayer(int i, int playerID, Vector3f position, float rotation) {
         Spatial player = playerNodeForUpdate.getChild(i);
         //player.getControl(PlayerControl.class).setClientID(playerID);
         //player.getControl(PlayerControl.class).faceTo(rotation);
         player.move(player.getLocalTranslation().subtract(position));
         player.rotate(0, 0, rotation);
+    }
+    public void updateRain(int i, Vector3f position, Vector3f velocity) {
+        Spatial rain = rainNode.getChild(i);
+        //player.getControl(PlayerControl.class).setClientID(playerID);
+        //player.getControl(PlayerControl.class).faceTo(rotation);
+        rain.move(rain.getLocalTranslation().subtract(position));
+        rain.rotateUpTo(velocity.normalize());
+        rain.rotate(0,0,FastMath.PI/2f);
     }
     
     private void mapInputs() {

@@ -32,7 +32,13 @@ public class ServerMain extends SimpleApplication {
     public static final String APP_HOST_ADDRESS = "127.0.0.1";
     
     private Node playerNode;
+     private Node enemyNode;
     public Server server;
+    private long enemySpawnCooldown;
+    private int screenWidth;
+    private int screenHeight;
+    
+    private float enemySpawnChance = 80;
     
     public static void main(String[] args) {
         ServerMain app = new ServerMain();
@@ -41,8 +47,14 @@ public class ServerMain extends SimpleApplication {
     
     @Override
     public void simpleInitApp() {
-        playerNode = new Node();
+        playerNode = new Node();        
+        playerNode.setUserData("alive", true);
+        enemyNode = new Node("enemies");
+        guiNode.attachChild(enemyNode);
         guiNode.attachChild(playerNode);
+        enemySpawnCooldown = System.currentTimeMillis();
+        screenWidth = settings.getWidth();
+        screenHeight = settings.getHeight();
         
         try {
             server = Network.createServer(APP_PORT_NUMBER);
@@ -57,7 +69,11 @@ public class ServerMain extends SimpleApplication {
     
     @Override
     public void simpleUpdate(float tpf) {
+        if ((Boolean) playerNode.getUserData("alive")) {
+            spawnEnemies();
+        }
         broadcastPlayerNodeState(playerNode, true);
+        broadcastRainNodeState(enemyNode, true);
     }
     
     
@@ -71,22 +87,68 @@ public class ServerMain extends SimpleApplication {
         PlayerNodeState message = new PlayerNodeState(playerNode, recreatePlayerNode);
         server.broadcast(message);
     }
+     public void broadcastRainNodeState(Node rainNode, boolean recreateRainNode) {
+        RainNodeState message = new RainNodeState(rainNode, recreateRainNode);
+        server.broadcast(message);
+    }
     
-    public void createNewPlayer(int clientID, int screenWidth, int screenHeight) {
+    public void createNewPlayer(int clientID, int scrnWidth, int scrnHeight) {
         System.out.println("Called by " + clientID);
-        Spatial newPlayer = getSpatial("Player");
+        Spatial newPlayer = getSpatial("Player1");
         newPlayer.addControl(new PlayerControl());
         newPlayer.getControl(PlayerControl.class).initializeData(clientID);
         newPlayer.move(screenWidth/2 + (new Random()).nextInt(300), screenHeight/2, 0);
         this.playerNode.attachChild(newPlayer);
+        screenWidth = scrnWidth;
+        screenHeight = scrnHeight;
         System.out.println(playerNode.getQuantity());
         //broadcastPlayerNodeState(playerNode, true);
     }
+    private void spawnEnemies() {
+        
+        if(System.currentTimeMillis() - enemySpawnCooldown >= 10) {
+            enemySpawnCooldown = System.currentTimeMillis();
+           
+                if (new Random().nextInt(30) == 0) {
+                    createSeeker();
+                }
+                /*if (new Random().nextInt((int) enemySpawnChance) == 0 ) {
+                    createWanderer();
+                }*/
+            
+            
+            if (enemySpawnChance >= 1.1f) {
+                enemySpawnChance -= 0.005f;
+            }
+        }
+    }
     
+    private void createSeeker() {
+        Spatial seeker = getSpatial("Rain");
+        seeker.setLocalTranslation(getSpawnPosition());
+        seeker.addControl(new SeekerControl(enemyNode,screenWidth,screenHeight));
+        seeker.setUserData("active",false);
+        enemyNode.attachChild(seeker);
+        //sound.spawn();
+    }
+    private Vector3f getSpawnPosition() {
+        Vector3f pos;
+        do {
+            int x = new Random().nextInt(2);
+            if (x == 0) {
+               pos = new Vector3f(new Random().nextInt(screenWidth), screenHeight,0);
+            } else {
+               pos = new Vector3f(screenWidth,new Random().nextInt(screenHeight),0); 
+            }           
+            
+        } while (pos.distanceSquared(playerNode.getLocalTranslation()) < 8000);
+        return pos;
+    }
     public static void registerMessageClasses() {
         Serializer.registerClass(NewPlayerMessage.class);
         Serializer.registerClass(UserKeyInputMessage.class);
         Serializer.registerClass(PlayerNodeState.class);
+        Serializer.registerClass(RainNodeState.class);
     }
     
     private void createMessageListeners() {
@@ -125,7 +187,7 @@ public class ServerMain extends SimpleApplication {
         public void messageReceived(HostedConnection source, Message message) {
             if (message instanceof NewPlayerMessage) {
                 NewPlayerMessage npm = (NewPlayerMessage) message;
-                ServerMain.this.createNewPlayer(source.getId(), npm.screenWidth, npm.screenHeight);
+                ServerMain.this.createNewPlayer(source.getId(), npm.screenWidth, npm.screenHeight);                
             } else if (message instanceof UserKeyInputMessage) {
                 UserKeyInputMessage inputMessage = (UserKeyInputMessage) message;
                 String command = inputMessage.getUserCommand();
@@ -156,7 +218,7 @@ public class ServerMain extends SimpleApplication {
                     playerControl.setMovement(PlayerControl.RIGHT, true, inputMessage.isPressed());
                 }
                 System.out.println("Key Pressed: " + inputMessage.getUserCommand() + " on Client #" + source.getId());
-            }
+            } 
         }
         
     }

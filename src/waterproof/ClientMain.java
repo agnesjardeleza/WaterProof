@@ -52,6 +52,7 @@ public class ClientMain extends SimpleApplication {
     
     private void createListeners() {
         client.addMessageListener(new ClientListener(), PlayerNodeState.class);
+        client.addMessageListener(new ClientListener(), RainNodeState.class);
     }
 
     @Override
@@ -78,6 +79,10 @@ public class ClientMain extends SimpleApplication {
             if (message instanceof PlayerNodeState) {
                 PlayerNodeState pns = (PlayerNodeState) message;
                 gameAppState.updatePlayerNode(pns);
+            }
+            if (message instanceof RainNodeState) {
+                RainNodeState pns = (RainNodeState) message;
+                gameAppState.updateRainNode(pns);
             }
         }
     }
