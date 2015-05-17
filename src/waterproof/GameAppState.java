@@ -42,6 +42,7 @@ public class GameAppState extends AbstractAppState implements ActionListener {
     private Node playerNodeForUpdate;
     private Node rainNodeForUpdate;
     private Node rainNode;
+    private Hud hud;
     
     public boolean readyForUpdates = false;
     
@@ -64,6 +65,8 @@ public class GameAppState extends AbstractAppState implements ActionListener {
         guiNode.attachChild(playerNode);
         rainNode = new Node();
         guiNode.attachChild(rainNode);
+        hud = new Hud(assetManager, guiNode, settings.getWidth(), settings.getHeight());
+        hud.reset();
         readyForUpdates = true;
         ((ClientMain)app).sendNewPlayerMessage();
         
@@ -88,7 +91,10 @@ public class GameAppState extends AbstractAppState implements ActionListener {
     public void onAction(String name, boolean isPressed, float tpf) {
         ((ClientMain)app).sendUserKeyInputMessage(name, isPressed);
     }
-    
+    public synchronized void updateScoreNode(ScoreMessage state) {
+        if(state.gameOver){hud.endGame();}
+        else {hud.update(state.score1, state.score2);}
+    }
     public synchronized void updatePlayerNode(PlayerNodeState state) {
         if (playerNodeForUpdate == null) playerNodeForUpdate = new Node();
         if (state.shouldNodeReset()) {

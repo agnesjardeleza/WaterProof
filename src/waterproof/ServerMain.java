@@ -11,6 +11,7 @@ import com.jme3.math.Vector3f;
 import com.jme3.network.HostedConnection;
 import com.jme3.network.Message;
 import com.jme3.network.MessageListener;
+import com.jme3.network.ConnectionListener;
 import com.jme3.network.Network;
 import com.jme3.network.Server;
 import com.jme3.network.serializing.Serializer;
@@ -37,6 +38,8 @@ public class ServerMain extends SimpleApplication {
     private long enemySpawnCooldown;
     private int screenWidth;
     private int screenHeight;
+    private Hud hud;
+    private int ready = 0;
     
     private float enemySpawnChance = 80;
     
@@ -65,6 +68,8 @@ public class ServerMain extends SimpleApplication {
         } catch (IOException e) {
             System.out.println("Could not start server.");
         }
+        hud = new Hud(assetManager, guiNode, screenWidth, screenHeight);
+        //hud.reset();
     }
     
     @Override
@@ -91,6 +96,14 @@ public class ServerMain extends SimpleApplication {
     }
      public void broadcastRainNodeState(Node rainNode, boolean recreateRainNode) {
         RainNodeState message = new RainNodeState(rainNode, recreateRainNode);
+        server.broadcast(message);
+    }
+     public void broadcastScoreMessage() {
+        ScoreMessage message = new ScoreMessage(hud.getPlayer1Score(), hud.getPlayer2Score());
+        server.broadcast(message);
+    }
+     public void broadcastScoreMessage(boolean gameOver) {
+        ScoreMessage message = new ScoreMessage(gameOver);
         server.broadcast(message);
     }
     
@@ -152,8 +165,16 @@ public class ServerMain extends SimpleApplication {
             if((Boolean) playerNode.getChild(j).getUserData("alive")){
                 for (int i = 0; i < enemyNode.getQuantity(); i++) {
                     if((Boolean) enemyNode.getChild(i).getUserData("active")) {
-                        if (checkCollision(playerNode.getChild(j),enemyNode.getChild(i))) {
+                        if (checkCollision(playerNode.getChild(j),enemyNode.getChild(i))) { 
+                            System.out.println(playerNode.getChild(j).getName());
+                            hud.addPoints(playerNode.getChild(j).getName());
                             killPlayer(playerNode.getChild(j));
+                            if (hud.checkScores()) {
+                                hud.endGame();
+                                broadcastScoreMessage(true);
+                            } else {
+                                broadcastScoreMessage();
+                            }
                         }
                     }
 
@@ -226,10 +247,7 @@ public class ServerMain extends SimpleApplication {
         //playerNode.getControl(PlayerControl.class).reset();
         playerNode.setUserData("alive", false);
         a.setUserData("dieTime",System.currentTimeMillis());
-        /*if (!hud.removeLife()) {
-            hud.endGame();
-            gameOver = true;
-        }*/
+        
         enemyNode.detachAllChildren();
         //blackHoleNode.detachAllChildren();
     }
@@ -239,11 +257,13 @@ public class ServerMain extends SimpleApplication {
         Serializer.registerClass(UserKeyInputMessage.class);
         Serializer.registerClass(PlayerNodeState.class);
         Serializer.registerClass(RainNodeState.class);
+        Serializer.registerClass(ScoreMessage.class);
     }
     
     private void createMessageListeners() {
         server.addMessageListener(new ServerListener(), UserKeyInputMessage.class);
         server.addMessageListener(new ServerListener(), NewPlayerMessage.class);
+        
     }
 
     
@@ -307,6 +327,7 @@ public class ServerMain extends SimpleApplication {
                 } else if (command.equals(UserKeyInputMessage.KEY_INPUT_RIGHT_STRAFE)) {
                     playerControl.setMovement(PlayerControl.RIGHT, true, inputMessage.isPressed());
                 }
+                
                 System.out.println("Key Pressed: " + inputMessage.getUserCommand() + " on Client #" + source.getId());
             } 
         }

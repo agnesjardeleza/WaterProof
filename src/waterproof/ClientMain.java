@@ -1,6 +1,7 @@
 package waterproof;
 
 import com.jme3.app.SimpleApplication;
+import com.jme3.cursors.plugins.JmeCursor;
 
 import com.jme3.math.Vector3f;
 import com.jme3.network.Client;
@@ -17,10 +18,11 @@ import java.io.IOException;
  */
 public class ClientMain extends SimpleApplication {
     
-    public Client client;
+    public Client client;    
     private GameAppState gameAppState;
     private MainMenuAppState menuAppState;
     
+    private Sound sound;
     public static void main(String[] args) {
         ClientMain app = new ClientMain();
         app.start();
@@ -47,11 +49,14 @@ public class ClientMain extends SimpleApplication {
             System.out.println("Could not connect to server.");
         }
         
-        addBloom();
+        sound = new Sound(assetManager);
+        sound.startMusic();
+        inputManager.setMouseCursor((JmeCursor) assetManager.loadAsset("Textures/Pointer.ico"));
+        menuAppState = new MainMenuAppState(settings);
+        stateManager.attach(menuAppState);
+        menuAppState.setEnabled(true);  
+        //addBloom();
         
-        gameAppState = new GameAppState(settings);
-        stateManager.attach(gameAppState);
-        gameAppState.setEnabled(true);
     }
     
     public void addBloom(){
@@ -69,6 +74,7 @@ public class ClientMain extends SimpleApplication {
     private void createListeners() {
         client.addMessageListener(new ClientListener(), PlayerNodeState.class);
         client.addMessageListener(new ClientListener(), RainNodeState.class);
+        client.addMessageListener(new ClientListener(), ScoreMessage.class);
     }
 
     @Override
@@ -83,6 +89,13 @@ public class ClientMain extends SimpleApplication {
     public void sendUserKeyInputMessage(String command, boolean isPressed) {
         UserKeyInputMessage message = new UserKeyInputMessage(command, isPressed);
         client.send(message);
+    }
+    public void triggerGameState() {
+        stateManager.detach(menuAppState);
+        gameAppState = new GameAppState(settings);
+        stateManager.attach(gameAppState);
+        addBloom();
+        //gameAppState.setEnabled(true); 
     }
     
     public int getID() { return client.getId(); }
@@ -99,6 +112,12 @@ public class ClientMain extends SimpleApplication {
             if (message instanceof RainNodeState) {
                 RainNodeState pns = (RainNodeState) message;
                 gameAppState.updateRainNode(pns);
+            }
+            if (message instanceof ScoreMessage) {
+                
+                
+                ScoreMessage pns = (ScoreMessage) message;
+                gameAppState.updateScoreNode(pns);
             }
         }
     }
