@@ -28,14 +28,21 @@ import com.jme3.ui.Picture;
  */
 public class GameAppState extends AbstractAppState implements ActionListener {
     
-    private KeyTrigger KEY_INPUT_UP = new KeyTrigger(KeyInput.KEY_UP);
-    private KeyTrigger KEY_INPUT_DOWN = new KeyTrigger(KeyInput.KEY_DOWN);
-    private KeyTrigger KEY_INPUT_LEFT = new KeyTrigger(KeyInput.KEY_LEFT);
-    private KeyTrigger KEY_INPUT_RIGHT = new KeyTrigger(KeyInput.KEY_RIGHT);
-    private KeyTrigger KEY_INPUT_UP_ALT = new KeyTrigger(KeyInput.KEY_W);
-    private KeyTrigger KEY_INPUT_DOWN_ALT = new KeyTrigger(KeyInput.KEY_S);
-    private KeyTrigger KEY_INPUT_LEFT_STRAFE = new KeyTrigger(KeyInput.KEY_A);
-    private KeyTrigger KEY_INPUT_RIGHT_STRAFE = new KeyTrigger(KeyInput.KEY_D);
+    private KeyTrigger KEY_TRIGGER_INPUT_UP = new KeyTrigger(KeyInput.KEY_UP);
+    private KeyTrigger KEY_TRIGGER_INPUT_DOWN = new KeyTrigger(KeyInput.KEY_DOWN);
+    private KeyTrigger KEY_TRIGGER_INPUT_LEFT = new KeyTrigger(KeyInput.KEY_LEFT);
+    private KeyTrigger KEY_TRIGGER_INPUT_RIGHT = new KeyTrigger(KeyInput.KEY_RIGHT);
+    private KeyTrigger KEY_TRIGGER_INPUT_UP_ALT = new KeyTrigger(KeyInput.KEY_W);
+    private KeyTrigger KEY_TRIGGER_INPUT_DOWN_ALT = new KeyTrigger(KeyInput.KEY_S);
+    private KeyTrigger KEY_TRIGGER_INPUT_LEFT_STRAFE = new KeyTrigger(KeyInput.KEY_A);
+    private KeyTrigger KEY_TRIGGER_INPUT_RIGHT_STRAFE = new KeyTrigger(KeyInput.KEY_D);
+    
+    private final static String KEY_INPUT_UP = "up";
+    private final static String KEY_INPUT_LEFT = "left";
+    private static final String KEY_INPUT_DOWN = "down";
+    private static final String KEY_INPUT_RIGHT = "right";
+    private static final String KEY_INPUT_LEFT_STRAFE = "left_strafe";
+    private static final String KEY_INPUT_RIGHT_STRAFE = "right_strafe";
     
     private SimpleApplication app;
     private Node rootNode;
@@ -61,6 +68,7 @@ public class GameAppState extends AbstractAppState implements ActionListener {
         this.inputManager = this.app.getInputManager();
         this.stateManager = stateManager;
         this.assetManager = this.app.getAssetManager();
+        player = null;
         
         initializePlayer();
         
@@ -82,38 +90,49 @@ public class GameAppState extends AbstractAppState implements ActionListener {
     
     @Override
     public void onAction(String name, boolean isPressed, float tpf) {
-        if ((Boolean) player.getUserData(PlayerControl.ALIVE)) {
+        if (player != null & (Boolean) player.getUserData(PlayerControl.ALIVE)) {
+            if (name.equals(KEY_INPUT_UP)) {
+                 player.getControl(PlayerControl.class).setMovement(PlayerControl.UP, false, isPressed);
+            } else if (name.equals(KEY_INPUT_LEFT)) {
+                player.getControl(PlayerControl.class).setMovement(PlayerControl.LEFT, false, isPressed);
+            } else if (name.equals(KEY_INPUT_DOWN)) {
+                player.getControl(PlayerControl.class).setMovement(PlayerControl.DOWN, false, isPressed);
+            } else if (name.equals(KEY_INPUT_RIGHT)) {
+                player.getControl(PlayerControl.class).setMovement(PlayerControl.RIGHT, false, isPressed);
+            } else if (name.equals(KEY_INPUT_LEFT_STRAFE)) {
+                player.getControl(PlayerControl.class).setMovement(PlayerControl.LEFT, true, isPressed);
+            } else if (name.equals(KEY_INPUT_RIGHT_STRAFE)) {
+                player.getControl(PlayerControl.class).setMovement(PlayerControl.RIGHT, true, isPressed);
+            }
         }
     }
     
     private void initializePlayer() {
         player = getSpatial("Player");
-        player.setLocalTranslation(settings.getWidth()/2,settings.getHeight()/2,0);
+        player.move(settings.getWidth()/2,settings.getHeight()/2,0);
         player.addControl(new PlayerControl());
         player.getControl(PlayerControl.class).initializeData();
         this.guiNode.attachChild(player);
     }
     
     private void mapInputs() {
-        inputManager.addMapping("up", KEY_INPUT_UP);
-        inputManager.addMapping("down", KEY_INPUT_DOWN);
-        inputManager.addMapping("left", KEY_INPUT_LEFT);
-        inputManager.addMapping("right", KEY_INPUT_RIGHT);
-        inputManager.addMapping("up", KEY_INPUT_UP_ALT);
-        inputManager.addMapping("down", KEY_INPUT_DOWN_ALT);
-        inputManager.addMapping("left_strafe", KEY_INPUT_LEFT_STRAFE);
-        inputManager.addMapping("right_strafe", KEY_INPUT_RIGHT_STRAFE);
+        inputManager.addMapping(KEY_INPUT_UP, KEY_TRIGGER_INPUT_UP);
+        inputManager.addMapping(KEY_INPUT_DOWN, KEY_TRIGGER_INPUT_DOWN);
+        inputManager.addMapping(KEY_INPUT_LEFT, KEY_TRIGGER_INPUT_LEFT);
+        inputManager.addMapping(KEY_INPUT_RIGHT, KEY_TRIGGER_INPUT_RIGHT);
+        inputManager.addMapping(KEY_INPUT_UP, KEY_TRIGGER_INPUT_UP_ALT);
+        inputManager.addMapping(KEY_INPUT_DOWN, KEY_TRIGGER_INPUT_DOWN_ALT);
+        inputManager.addMapping(KEY_INPUT_LEFT_STRAFE, KEY_TRIGGER_INPUT_LEFT_STRAFE);
+        inputManager.addMapping(KEY_INPUT_RIGHT_STRAFE, KEY_TRIGGER_INPUT_RIGHT_STRAFE);
         
-        inputManager.addListener(this, "up");
-        inputManager.addListener(this, "down");
-        inputManager.addListener(this, "left");
-        inputManager.addListener(this, "right");
-        inputManager.addListener(this, "left_strafe");
-        inputManager.addListener(this, "right_strafe");
+        inputManager.addListener(this, KEY_INPUT_UP);
+        inputManager.addListener(this, KEY_INPUT_DOWN);
+        inputManager.addListener(this, KEY_INPUT_LEFT);
+        inputManager.addListener(this, KEY_INPUT_RIGHT);
+        inputManager.addListener(this, KEY_INPUT_LEFT_STRAFE);
+        inputManager.addListener(this, KEY_INPUT_RIGHT_STRAFE);
         
     }
-    
-
     
     private Spatial getSpatial(String name) {
         Node node = new Node(name);

@@ -30,9 +30,9 @@ public class ClientMain extends SimpleApplication {
         
         myClient = new NetworkClient();
         GameAppState gameAppState = new GameAppState(settings);
-        gameAppState.initialize(stateManager, this);
-        stateManager.attach(gameAppState);
         gameAppState.setEnabled(true);
+        stateManager.attach(gameAppState);
+        
     }
 
     @Override
