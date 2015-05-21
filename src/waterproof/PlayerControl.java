@@ -8,6 +8,7 @@ import com.jme3.export.InputCapsule;
 import com.jme3.export.JmeExporter;
 import com.jme3.export.JmeImporter;
 import com.jme3.export.OutputCapsule;
+import com.jme3.math.FastMath;
 import com.jme3.math.Vector3f;
 import com.jme3.renderer.RenderManager;
 import com.jme3.renderer.ViewPort;
@@ -35,13 +36,19 @@ public class PlayerControl extends AbstractControl {
     public static final int DOWN = 2;
     public static final int RIGHT = 3;
     public static final int STRAFE = 4;
+    public static final float FACE_UP = FastMath.PI/2;
+    public static final float FACE_LEFT = FastMath.PI;
+    public static final float FACE_RIGHT = 0;
+    public static final float FACE_DOWN = -FastMath.PI/2;
     
     //STATUS VARIABLES
     private boolean moveArray[];
+    private float rotation;
     
     //ATTRIBUTE VARIABLES
     private static final float speed = 800f;
     
+    //Getters and Setters
     public int getWins() { return spatial.getUserData(WINS); }
     public String getPowerUp() { return (String) spatial.getUserData(ACTIVE_POWER_UP); }
     public boolean getLifeStatus() { return (Boolean) spatial.getUserData(ALIVE); }
@@ -72,17 +79,30 @@ public class PlayerControl extends AbstractControl {
     }
     
     private void move(float tpf) {
+        //Handle the movements
         if (getLifeStatus() == false) return;
+        if (moveArray[UP]) spatial.move(0, speed*tpf, 0);
+        else if (moveArray[RIGHT]) spatial.move(speed*tpf, 0, 0);
+        else if (moveArray[LEFT]) spatial.move(-speed*tpf, 0, 0);
+        else if (moveArray[DOWN]) spatial.move(0, -speed*tpf, 0);
         
-        if (moveArray[UP]) {
-            spatial.move(0, speed*tpf, 0);
-        } else if (moveArray[RIGHT]) {
-            spatial.move(speed*tpf, 0, 0);
-        } else if (moveArray[LEFT]) {
-            spatial.move(-speed*tpf, 0, 0);
-        } else if (moveArray[DOWN]) {
-            spatial.move(0, -speed*tpf, 0);
+        //Handle Rotations
+        if (moveArray[STRAFE]) {
+            if (moveArray[UP] && rotation == FACE_DOWN) faceTo(FACE_UP);
+            else if (moveArray[DOWN] && rotation == FACE_UP) faceTo(FACE_DOWN);
+            else if (moveArray[LEFT] && rotation == FACE_RIGHT) faceTo(FACE_LEFT);
+            else if (moveArray[RIGHT] && rotation == FACE_LEFT) faceTo(FACE_RIGHT);
+        } else {
+            if (moveArray[UP] && rotation != FACE_UP) faceTo(FACE_UP);
+            else if (moveArray[DOWN] && rotation != FACE_DOWN) faceTo(FACE_DOWN);
+            else if (moveArray[LEFT] && rotation != FACE_LEFT) faceTo(FACE_LEFT);
+            else if (moveArray[RIGHT] && rotation != FACE_RIGHT) faceTo(FACE_RIGHT);
         }
+    }
+    
+    public void faceTo(float facing) {
+        spatial.rotate(0, 0, -rotation + facing);
+        rotation = facing;
     }
     
     @Override

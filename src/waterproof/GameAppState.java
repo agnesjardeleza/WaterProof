@@ -32,8 +32,8 @@ public class GameAppState extends AbstractAppState implements ActionListener {
     private KeyTrigger KEY_TRIGGER_INPUT_DOWN = new KeyTrigger(KeyInput.KEY_DOWN);
     private KeyTrigger KEY_TRIGGER_INPUT_LEFT = new KeyTrigger(KeyInput.KEY_LEFT);
     private KeyTrigger KEY_TRIGGER_INPUT_RIGHT = new KeyTrigger(KeyInput.KEY_RIGHT);
-    private KeyTrigger KEY_TRIGGER_INPUT_UP_ALT = new KeyTrigger(KeyInput.KEY_W);
-    private KeyTrigger KEY_TRIGGER_INPUT_DOWN_ALT = new KeyTrigger(KeyInput.KEY_S);
+    private KeyTrigger KEY_TRIGGER_INPUT_UP_STRAFE = new KeyTrigger(KeyInput.KEY_W);
+    private KeyTrigger KEY_TRIGGER_INPUT_DOWN_STRAFE = new KeyTrigger(KeyInput.KEY_S);
     private KeyTrigger KEY_TRIGGER_INPUT_LEFT_STRAFE = new KeyTrigger(KeyInput.KEY_A);
     private KeyTrigger KEY_TRIGGER_INPUT_RIGHT_STRAFE = new KeyTrigger(KeyInput.KEY_D);
     
@@ -41,7 +41,9 @@ public class GameAppState extends AbstractAppState implements ActionListener {
     private final static String KEY_INPUT_LEFT = "left";
     private static final String KEY_INPUT_DOWN = "down";
     private static final String KEY_INPUT_RIGHT = "right";
+    private static final String KEY_INPUT_UP_STRAFE = "up_strafe";
     private static final String KEY_INPUT_LEFT_STRAFE = "left_strafe";
+    private static final String KEY_INPUT_DOWN_STRAFE = "down_strafe";
     private static final String KEY_INPUT_RIGHT_STRAFE = "right_strafe";
     
     private SimpleApplication app;
@@ -99,8 +101,12 @@ public class GameAppState extends AbstractAppState implements ActionListener {
                 player.getControl(PlayerControl.class).setMovement(PlayerControl.DOWN, false, isPressed);
             } else if (name.equals(KEY_INPUT_RIGHT)) {
                 player.getControl(PlayerControl.class).setMovement(PlayerControl.RIGHT, false, isPressed);
+            } else if (name.equals(KEY_INPUT_UP_STRAFE)) {
+                player.getControl(PlayerControl.class).setMovement(PlayerControl.UP, true, isPressed);
             } else if (name.equals(KEY_INPUT_LEFT_STRAFE)) {
                 player.getControl(PlayerControl.class).setMovement(PlayerControl.LEFT, true, isPressed);
+            } else if (name.equals(KEY_INPUT_DOWN_STRAFE)) {
+                player.getControl(PlayerControl.class).setMovement(PlayerControl.DOWN, true, isPressed);
             } else if (name.equals(KEY_INPUT_RIGHT_STRAFE)) {
                 player.getControl(PlayerControl.class).setMovement(PlayerControl.RIGHT, true, isPressed);
             }
@@ -120,8 +126,8 @@ public class GameAppState extends AbstractAppState implements ActionListener {
         inputManager.addMapping(KEY_INPUT_DOWN, KEY_TRIGGER_INPUT_DOWN);
         inputManager.addMapping(KEY_INPUT_LEFT, KEY_TRIGGER_INPUT_LEFT);
         inputManager.addMapping(KEY_INPUT_RIGHT, KEY_TRIGGER_INPUT_RIGHT);
-        inputManager.addMapping(KEY_INPUT_UP, KEY_TRIGGER_INPUT_UP_ALT);
-        inputManager.addMapping(KEY_INPUT_DOWN, KEY_TRIGGER_INPUT_DOWN_ALT);
+        inputManager.addMapping(KEY_INPUT_UP_STRAFE, KEY_TRIGGER_INPUT_UP_STRAFE);
+        inputManager.addMapping(KEY_INPUT_DOWN_STRAFE, KEY_TRIGGER_INPUT_DOWN_STRAFE);
         inputManager.addMapping(KEY_INPUT_LEFT_STRAFE, KEY_TRIGGER_INPUT_LEFT_STRAFE);
         inputManager.addMapping(KEY_INPUT_RIGHT_STRAFE, KEY_TRIGGER_INPUT_RIGHT_STRAFE);
         
@@ -129,6 +135,8 @@ public class GameAppState extends AbstractAppState implements ActionListener {
         inputManager.addListener(this, KEY_INPUT_DOWN);
         inputManager.addListener(this, KEY_INPUT_LEFT);
         inputManager.addListener(this, KEY_INPUT_RIGHT);
+        inputManager.addListener(this, KEY_INPUT_UP_STRAFE);
+        inputManager.addListener(this, KEY_INPUT_DOWN_STRAFE);
         inputManager.addListener(this, KEY_INPUT_LEFT_STRAFE);
         inputManager.addListener(this, KEY_INPUT_RIGHT_STRAFE);
         
