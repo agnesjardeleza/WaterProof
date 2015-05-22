@@ -32,22 +32,25 @@ public class SeekerControl extends AbstractControl {
     private Vector3f velocity;
     private long spawnTime;
     private int screenWidth, screenHeight;
+    private Vector3f playerDirection;
     
     public SeekerControl(Spatial player, int screenWidth, int screenHeight) {
         this.player = player;
         velocity = new Vector3f(0,0,0);
-        spawnTime = System.currentTimeMillis();  
+        spawnTime = System.currentTimeMillis();
         this.screenWidth = screenWidth;
         this.screenHeight = screenHeight;
+        //System.out.println("Time: " + spawnTime);
+        if (spawnTime%30000 > 15000) {
+            playerDirection = new Vector3f(-screenWidth/2, -screenHeight/2, 0);
+        } else {
+            playerDirection = new Vector3f(screenWidth/2, -screenHeight/2, 0);
+        }
+        playerDirection.normalizeLocal().multLocal(1500f);
     }
     @Override
     protected void controlUpdate(float tpf) {
-        //TODO: add code that controls Spatial,
-        //e.g. spatial.rotate(tpf,tpf,tpf);
         if ((Boolean) spatial.getUserData("active")) {
-            Vector3f playerDirection = new Vector3f(-screenWidth/2f,-screenHeight/2f,0);
-            playerDirection.normalizeLocal();
-            playerDirection.multLocal(1500f);
             velocity.addLocal(playerDirection);
             velocity.multLocal(0.8f);
             spatial.move(velocity.mult(tpf*0.1f));
@@ -62,16 +65,13 @@ public class SeekerControl extends AbstractControl {
                 spatial.setUserData("active",true);
             }
             
-            ColorRGBA color = new ColorRGBA(1,1,1,dif/1000f);
-            Node spatialNode = (Node) spatial;
-            Picture pic = (Picture) spatialNode.getChild("Rain");
-            pic.getMaterial().setColor("Color", color);
+            //ColorRGBA color = new ColorRGBA(1,1,1,dif/1000f);
+            //Node spatialNode = (Node) spatial;
+            //Picture pic = (Picture) spatialNode.getChild("Rain");
+            //pic.getMaterial().setColor("Color", color);
         }
         Vector3f loc = spatial.getLocalTranslation();
-        if (loc.x > screenWidth || 
-            loc.y > screenHeight ||
-            loc.x < 0 ||
-            loc.y < 0) {
+        if (loc.y < 0) {
             spatial.removeFromParent();
         }
     }
@@ -85,6 +85,7 @@ public class SeekerControl extends AbstractControl {
         //not called when spatial is culled.
     }
     
+    @Override
     public Control cloneForSpatial(Spatial spatial) {
         SeekerControl control = new SeekerControl(player,screenWidth,screenHeight);
         //TODO: copy parameters to new Control

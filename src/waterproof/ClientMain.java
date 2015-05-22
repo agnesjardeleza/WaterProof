@@ -7,6 +7,8 @@ import com.jme3.network.Client;
 import com.jme3.network.Message;
 import com.jme3.network.MessageListener;
 import com.jme3.network.Network;
+import com.jme3.post.FilterPostProcessor;
+import com.jme3.post.filters.BloomFilter;
 import java.io.IOException;
 
 /**
@@ -48,6 +50,18 @@ public class ClientMain extends SimpleApplication {
         gameAppState = new GameAppState(settings);
         stateManager.attach(gameAppState);
         gameAppState.setEnabled(true);
+        
+        FilterPostProcessor fpp = new FilterPostProcessor(assetManager);
+        
+        BloomFilter bloom = new BloomFilter();
+        bloom.setBloomIntensity(2.37f);
+        bloom.setExposurePower(2);
+        bloom.setExposureCutOff(0f);
+        bloom.setBlurScale(1.5f);
+        fpp.addFilter(bloom);
+        
+        guiViewPort.addProcessor(fpp);
+        guiViewPort.setClearColor(true);
     }
     
     private void createListeners() {

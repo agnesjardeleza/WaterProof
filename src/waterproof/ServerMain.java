@@ -7,6 +7,7 @@ package waterproof;
 import com.jme3.app.SimpleApplication;
 import com.jme3.material.Material;
 import com.jme3.material.RenderState;
+import com.jme3.math.FastMath;
 import com.jme3.math.Vector3f;
 import com.jme3.network.HostedConnection;
 import com.jme3.network.Message;
@@ -28,7 +29,7 @@ import java.util.Random;
  */
 public class ServerMain extends SimpleApplication {
     
-    public static final int APP_PORT_NUMBER = 8888;
+    public static final int APP_PORT_NUMBER = 8889;
     public static final String APP_HOST_ADDRESS = "127.0.0.1";
     
     private Node playerNode;
@@ -37,6 +38,7 @@ public class ServerMain extends SimpleApplication {
     private long enemySpawnCooldown;
     private int screenWidth;
     private int screenHeight;
+    private float spawnCenter;
     
     private float enemySpawnChance = 80;
     
@@ -55,6 +57,7 @@ public class ServerMain extends SimpleApplication {
         enemySpawnCooldown = System.currentTimeMillis();
         screenWidth = settings.getWidth();
         screenHeight = settings.getHeight();
+        spawnCenter = settings.getWidth()/2;
         
         try {
             server = Network.createServer(APP_PORT_NUMBER);
@@ -85,15 +88,17 @@ public class ServerMain extends SimpleApplication {
     
     public void broadcastPlayerNodeState(Node playerNode, boolean recreatePlayerNode) {
         PlayerNodeState message = new PlayerNodeState(playerNode, recreatePlayerNode);
+        message.setReliable(false);
         server.broadcast(message);
     }
      public void broadcastRainNodeState(Node rainNode, boolean recreateRainNode) {
         RainNodeState message = new RainNodeState(rainNode, recreateRainNode);
+        message.setReliable(false);
         server.broadcast(message);
     }
     
     public void createNewPlayer(int clientID, int scrnWidth, int scrnHeight) {
-        System.out.println("Called by " + clientID);
+        //System.out.println("Called by " + clientID);
         Spatial newPlayer = getSpatial("Player1");
         newPlayer.addControl(new PlayerControl());
         newPlayer.getControl(PlayerControl.class).initializeData(clientID);
@@ -106,17 +111,11 @@ public class ServerMain extends SimpleApplication {
     }
     private void spawnEnemies() {
         
-        if(System.currentTimeMillis() - enemySpawnCooldown >= 10) {
+        if(System.currentTimeMillis() - enemySpawnCooldown >= 15 && enemyNode.getQuantity() < 50) {
             enemySpawnCooldown = System.currentTimeMillis();
-           
-                if (new Random().nextInt(30) == 0) {
+                if (new Random().nextInt(100) < 100 - enemySpawnChance) {
                     createSeeker();
                 }
-                /*if (new Random().nextInt((int) enemySpawnChance) == 0 ) {
-                    createWanderer();
-                }*/
-            
-            
             if (enemySpawnChance >= 1.1f) {
                 enemySpawnChance -= 0.005f;
             }
@@ -134,14 +133,16 @@ public class ServerMain extends SimpleApplication {
     private Vector3f getSpawnPosition() {
         Vector3f pos;
         do {
-            int x = new Random().nextInt(2);
+            //int x = new Random().nextInt(2);
+            spawnCenter = screenWidth/2 +  (screenWidth)*FastMath.sin((System.currentTimeMillis()%5000));
+            int x = 0;
             if (x == 0) {
-               pos = new Vector3f(new Random().nextInt(screenWidth), screenHeight,0);
+               pos = new Vector3f(spawnCenter, screenHeight + 10,0);
             } else {
                pos = new Vector3f(screenWidth,new Random().nextInt(screenHeight),0); 
             }           
             
-        } while (pos.distanceSquared(playerNode.getLocalTranslation()) < 8000);
+        } while (pos.x < -screenWidth/2);
         return pos;
     }
     public static void registerMessageClasses() {

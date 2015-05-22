@@ -15,13 +15,12 @@ import com.jme3.material.Material;
 import com.jme3.material.RenderState;
 import com.jme3.math.FastMath;
 import com.jme3.math.Vector3f;
+import com.jme3.post.filters.FogFilter;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.system.AppSettings;
 import com.jme3.texture.Texture2D;
 import com.jme3.ui.Picture;
-import com.sun.org.apache.bcel.internal.generic.LLOAD;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 /**
  *
@@ -47,9 +46,13 @@ public class GameAppState extends AbstractAppState implements ActionListener {
     private Node rainNodeForUpdate;
     private Node rainNode;
     
-    public ScheduledThreadPoolExecutor executor;
-    
     public boolean readyForUpdates = false;
+    
+    //Visuals
+    //private FilterPostProcessor fpp;
+    private FogFilter fog;
+    //private BloomFilter bloom;
+    
     
     public GameAppState(AppSettings settings) {
         this.settings = settings;
@@ -75,20 +78,28 @@ public class GameAppState extends AbstractAppState implements ActionListener {
         
         mapInputs();
         
-        executor = new ScheduledThreadPoolExecutor(4);
+        
+        
+        /*
+        fog = new FogFilter();
+        fog.setFogColor(new ColorRGBA(30f/255, 30f/255, 200f/255, 0.70f));
+        fog.setFogDistance(0.35f);
+        fog.setFogDensity(0.35f);
+        fpp.addFilter(fog);*/
+        
+        
         
     }
     
     @Override
     public void update(float tpf) {
-        updatePlayerNodeForDisplay();
-        updateRainNodeForDisplay();
+            updatePlayerNodeForDisplay();
+            updateRainNodeForDisplay(); 
     }
     
     @Override
     public void cleanup() {
         super.cleanup();
-        executor.shutdown();
         //TODO: clean up what you initialized in the initialize method,
         //e.g. remove all spatials from rootNode
         //this is called on the OpenGL thread after the AppState has been detached
@@ -105,9 +116,9 @@ public class GameAppState extends AbstractAppState implements ActionListener {
             if (playerNodeForUpdate == null) playerNodeForUpdate = new Node();
             if (state.shouldNodeReset()) {
                 playerNodeForUpdate.detachAllChildren();
-                System.out.println("Updating...");
+                //System.out.println("Updating...");
                 for (int i = 0; i < state.getPlayerNum(); i++) {
-                    System.out.println(state.getPos(i).x);
+                    //System.out.println(state.getPos(i).x);
                     playerNodeForUpdate.attachChild(createPlayer(state.getPlayerID(i), state.getPos(i), state.getRotation(i), state.getWins(i), state.getLifeStatus(i)));
                 }
             } else {
@@ -122,9 +133,9 @@ public class GameAppState extends AbstractAppState implements ActionListener {
             if (rainNodeForUpdate == null) rainNodeForUpdate = new Node();
             if (state.shouldNodeReset()) {
                 rainNodeForUpdate.detachAllChildren();
-                System.out.println("Updating...");
+                //System.out.println("Updating...");
                 for (int i = 0; i < state.getRainNum(); i++) {
-                    System.out.println(state.getPos(i).x);
+                    //System.out.println(state.getPos(i).x);
                     rainNodeForUpdate.attachChild(createRain(state.getPos(i), state.getVector(i)));
                 }
             } else {
