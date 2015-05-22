@@ -47,6 +47,8 @@ public class ClientMain extends SimpleApplication {
             System.out.println("Could not connect to server.");
         }
         
+        addBloom();
+        
         gameAppState = new GameAppState(settings);
         stateManager.attach(gameAppState);
         gameAppState.setEnabled(true);
@@ -60,6 +62,18 @@ public class ClientMain extends SimpleApplication {
         bloom.setBlurScale(1.5f);
         fpp.addFilter(bloom);
         
+        guiViewPort.addProcessor(fpp);
+        guiViewPort.setClearColor(true);
+    }
+    
+    public void addBloom(){
+        FilterPostProcessor fpp = new FilterPostProcessor(assetManager);
+        BloomFilter bloom = new BloomFilter();
+        bloom.setBloomIntensity(2f);
+        bloom.setExposurePower(2);
+        bloom.setExposureCutOff(0f);
+        bloom.setBlurScale(1.5f);
+        fpp.addFilter(bloom);
         guiViewPort.addProcessor(fpp);
         guiViewPort.setClearColor(true);
     }

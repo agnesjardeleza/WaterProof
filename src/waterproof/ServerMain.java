@@ -71,9 +71,11 @@ public class ServerMain extends SimpleApplication {
     }
     
     @Override
-    public void simpleUpdate(float tpf) {
+    public void simpleUpdate(float tpf) {      
+       
         if ((Boolean) playerNode.getUserData("alive")) {
             spawnEnemies();
+            handleCollisions();
         }
         broadcastPlayerNodeState(playerNode, true);
         broadcastRainNodeState(enemyNode, true);
@@ -139,12 +141,100 @@ public class ServerMain extends SimpleApplication {
             if (x == 0) {
                pos = new Vector3f(spawnCenter, screenHeight + 10,0);
             } else {
-               pos = new Vector3f(screenWidth,new Random().nextInt(screenHeight),0); 
+               pos = new Vector3f(screenWidth + 10,200 + new Random().nextInt(screenHeight-200),0); 
             }           
             
         } while (pos.x < -screenWidth/2);
         return pos;
     }
+    
+    private void handleCollisions() {
+        for (int j = 0; j < playerNode.getQuantity(); j++){
+            if((Boolean) playerNode.getChild(j).getUserData("alive")){
+                for (int i = 0; i < enemyNode.getQuantity(); i++) {
+                    if((Boolean) enemyNode.getChild(i).getUserData("active")) {
+                        if (checkCollision(playerNode.getChild(j),enemyNode.getChild(i))) {
+                            killPlayer(playerNode.getChild(j));
+                        }
+                    }
+
+                }
+             }
+        }
+    
+       /* int i=0;
+        while (i < enemyNode.getQuantity()) {
+            int j = 0;
+            while (j < bulletNode.getQuantity()){
+                if (checkCollision(enemyNode.getChild(i),bulletNode.getChild(j))) {
+                    if (enemyNode.getChild(i).getName().equals("Seeker")) {
+                        hud.addPoints(2);
+                    } else if (enemyNode.getChild(i).getName().equals("Wanderer")) {
+                        hud.addPoints(1);
+                    }
+                    particleManager.enemyExplosion(enemyNode.getChild(i).getLocalTranslation());
+                    enemyNode.detachChildAt(i);
+                    bulletNode.detachChildAt(j);
+                    sound.explosion();
+                    break;
+                }
+                j++;
+            }
+            i++;
+        }
+        //black hole
+        for (i = 0; i < blackHoleNode.getQuantity(); i++) {
+            Spatial blackHole = blackHoleNode.getChild(i);
+            if ((Boolean) blackHole.getUserData("active")) {
+                if (checkCollision(player,blackHole)) {
+                    killPlayer();
+                }
+                //enemies
+                int j=0;
+                while (j < enemyNode.getQuantity()) {
+                    if (checkCollision(enemyNode.getChild(j), blackHole)) {
+                        particleManager.enemyExplosion(enemyNode.getChild(j).getLocalTranslation());
+                        enemyNode.detachChildAt(j);
+                    }
+                    j++;
+                }
+                //bullets
+                j=0;
+                while (j < bulletNode.getQuantity()) {
+                    if (checkCollision(bulletNode.getChild(j),blackHole)) {
+                        bulletNode.detachChildAt(j);
+                        blackHole.getControl(BlackHoleControl.class).wasShot();
+                        if (blackHole.getControl(BlackHoleControl.class).isDead()) {
+                            blackHoleNode.detachChild(blackHole);
+                            sound.explosion();
+                        }
+                    }
+                    j++;
+                }
+            }
+        }*/
+    }
+    
+    private boolean checkCollision(Spatial a, Spatial b) {
+        float distance = a.getLocalTranslation().distance(b.getLocalTranslation());
+        float maxDistance = (Float)a.getUserData("radius") + (Float)b.getUserData("radius");
+        
+        return distance <= maxDistance;
+    }
+    
+    private void killPlayer(Spatial a) {
+        a.removeFromParent();
+        //playerNode.getControl(PlayerControl.class).reset();
+        playerNode.setUserData("alive", false);
+        a.setUserData("dieTime",System.currentTimeMillis());
+        /*if (!hud.removeLife()) {
+            hud.endGame();
+            gameOver = true;
+        }*/
+        enemyNode.detachAllChildren();
+        //blackHoleNode.detachAllChildren();
+    }
+    
     public static void registerMessageClasses() {
         Serializer.registerClass(NewPlayerMessage.class);
         Serializer.registerClass(UserKeyInputMessage.class);

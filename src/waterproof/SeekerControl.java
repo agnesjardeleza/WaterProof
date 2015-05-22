@@ -31,8 +31,8 @@ public class SeekerControl extends AbstractControl {
     private Spatial player;
     private Vector3f velocity;
     private long spawnTime;
-    private int screenWidth, screenHeight;
-    private Vector3f playerDirection;
+    private int screenWidth, screenHeight;    
+    public static final String RADIUS = "radius";
     
     public SeekerControl(Spatial player, int screenWidth, int screenHeight) {
         this.player = player;
@@ -108,4 +108,5 @@ public class SeekerControl extends AbstractControl {
         //out.write(this.value, "name", defaultValue);
     }
     public Vector3f getVector() { return velocity; }
+    public float getRadius() { return spatial.getUserData(RADIUS); }
 }
