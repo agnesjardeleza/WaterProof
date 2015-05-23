@@ -24,6 +24,7 @@ public class UserKeyInputMessage extends AbstractMessage {
     public static final KeyTrigger KEY_TRIGGER_INPUT_DOWN_STRAFE = new KeyTrigger(KeyInput.KEY_S);
     public static final KeyTrigger KEY_TRIGGER_INPUT_LEFT_STRAFE = new KeyTrigger(KeyInput.KEY_A);
     public static final KeyTrigger KEY_TRIGGER_INPUT_RIGHT_STRAFE = new KeyTrigger(KeyInput.KEY_D);
+    public static final KeyTrigger KEY_TRIGGER_INPUT_ENTER = new KeyTrigger(KeyInput.KEY_RETURN);
     
     public static final String KEY_INPUT_UP = "up";
     public static final String KEY_INPUT_LEFT = "left";
@@ -33,6 +34,7 @@ public class UserKeyInputMessage extends AbstractMessage {
     public static final String KEY_INPUT_LEFT_STRAFE = "left_strafe";
     public static final String KEY_INPUT_DOWN_STRAFE = "down_strafe";
     public static final String KEY_INPUT_RIGHT_STRAFE = "right_strafe";
+    public static final String KEY_INPUT_ENTER = "enter";
     
     private String userCommand;
     private boolean isPressed;

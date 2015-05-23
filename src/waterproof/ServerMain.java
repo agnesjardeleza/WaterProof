@@ -7,11 +7,11 @@ package waterproof;
 import com.jme3.app.SimpleApplication;
 import com.jme3.material.Material;
 import com.jme3.material.RenderState;
-import com.jme3.math.FastMath;
 import com.jme3.math.Vector3f;
 import com.jme3.network.HostedConnection;
 import com.jme3.network.Message;
 import com.jme3.network.MessageListener;
+import com.jme3.network.ConnectionListener;
 import com.jme3.network.Network;
 import com.jme3.network.Server;
 import com.jme3.network.serializing.Serializer;
@@ -29,7 +29,7 @@ import java.util.Random;
  */
 public class ServerMain extends SimpleApplication {
     
-    public static final int APP_PORT_NUMBER = 8889;
+    public static final int APP_PORT_NUMBER = 8888;
     public static final String APP_HOST_ADDRESS = "127.0.0.1";
     
     private Node playerNode;
@@ -38,7 +38,8 @@ public class ServerMain extends SimpleApplication {
     private long enemySpawnCooldown;
     private int screenWidth;
     private int screenHeight;
-    private float spawnCenter;
+    private Hud hud;
+    private int ready = 0;
     
     private float enemySpawnChance = 80;
     
@@ -57,7 +58,6 @@ public class ServerMain extends SimpleApplication {
         enemySpawnCooldown = System.currentTimeMillis();
         screenWidth = settings.getWidth();
         screenHeight = settings.getHeight();
-        spawnCenter = settings.getWidth()/2;
         
         try {
             server = Network.createServer(APP_PORT_NUMBER);
@@ -68,6 +68,8 @@ public class ServerMain extends SimpleApplication {
         } catch (IOException e) {
             System.out.println("Could not start server.");
         }
+        hud = new Hud(assetManager, guiNode, screenWidth, screenHeight);
+        //hud.reset();
     }
     
     @Override
@@ -90,17 +92,23 @@ public class ServerMain extends SimpleApplication {
     
     public void broadcastPlayerNodeState(Node playerNode, boolean recreatePlayerNode) {
         PlayerNodeState message = new PlayerNodeState(playerNode, recreatePlayerNode);
-        message.setReliable(false);
         server.broadcast(message);
     }
      public void broadcastRainNodeState(Node rainNode, boolean recreateRainNode) {
         RainNodeState message = new RainNodeState(rainNode, recreateRainNode);
-        message.setReliable(false);
+        server.broadcast(message);
+    }
+     public void broadcastScoreMessage() {
+        ScoreMessage message = new ScoreMessage(hud.getPlayer1Score(), hud.getPlayer2Score());
+        server.broadcast(message);
+    }
+     public void broadcastScoreMessage(boolean gameOver) {
+        ScoreMessage message = new ScoreMessage(gameOver);
         server.broadcast(message);
     }
     
     public void createNewPlayer(int clientID, int scrnWidth, int scrnHeight) {
-        //System.out.println("Called by " + clientID);
+        System.out.println("Called by " + clientID);
         Spatial newPlayer = getSpatial("Player1");
         newPlayer.addControl(new PlayerControl());
         newPlayer.getControl(PlayerControl.class).initializeData(clientID);
@@ -113,11 +121,17 @@ public class ServerMain extends SimpleApplication {
     }
     private void spawnEnemies() {
         
-        if(System.currentTimeMillis() - enemySpawnCooldown >= 15 && enemyNode.getQuantity() < 50) {
+        if(System.currentTimeMillis() - enemySpawnCooldown >= 5) {
             enemySpawnCooldown = System.currentTimeMillis();
-                if (new Random().nextInt(100) < 100 - enemySpawnChance) {
+           
+                if (new Random().nextInt(30) == 0) {
                     createSeeker();
                 }
+                /*if (new Random().nextInt((int) enemySpawnChance) == 0 ) {
+                    createWanderer();
+                }*/
+            
+            
             if (enemySpawnChance >= 1.1f) {
                 enemySpawnChance -= 0.005f;
             }
@@ -135,16 +149,14 @@ public class ServerMain extends SimpleApplication {
     private Vector3f getSpawnPosition() {
         Vector3f pos;
         do {
-            //int x = new Random().nextInt(2);
-            spawnCenter = screenWidth/2 +  (screenWidth)*FastMath.sin((System.currentTimeMillis()%5000));
-            int x = 0;
+            int x = new Random().nextInt(2);
             if (x == 0) {
-               pos = new Vector3f(spawnCenter, screenHeight + 10,0);
+               pos = new Vector3f(200 + new Random().nextInt(screenWidth-200), screenHeight + 10,0);
             } else {
                pos = new Vector3f(screenWidth + 10,200 + new Random().nextInt(screenHeight-200),0); 
             }           
             
-        } while (pos.x < -screenWidth/2);
+        } while (pos.distanceSquared(playerNode.getLocalTranslation()) < 8000);
         return pos;
     }
     
@@ -153,8 +165,16 @@ public class ServerMain extends SimpleApplication {
             if((Boolean) playerNode.getChild(j).getUserData("alive")){
                 for (int i = 0; i < enemyNode.getQuantity(); i++) {
                     if((Boolean) enemyNode.getChild(i).getUserData("active")) {
-                        if (checkCollision(playerNode.getChild(j),enemyNode.getChild(i))) {
+                        if (checkCollision(playerNode.getChild(j),enemyNode.getChild(i))) { 
+                            System.out.println(playerNode.getChild(j).getName());
+                            hud.addPoints(playerNode.getChild(j).getName());
                             killPlayer(playerNode.getChild(j));
+                            if (hud.checkScores()) {
+                                hud.endGame();
+                                broadcastScoreMessage(true);
+                            } else {
+                                broadcastScoreMessage();
+                            }
                         }
                     }
 
@@ -227,10 +247,7 @@ public class ServerMain extends SimpleApplication {
         //playerNode.getControl(PlayerControl.class).reset();
         playerNode.setUserData("alive", false);
         a.setUserData("dieTime",System.currentTimeMillis());
-        /*if (!hud.removeLife()) {
-            hud.endGame();
-            gameOver = true;
-        }*/
+        
         enemyNode.detachAllChildren();
         //blackHoleNode.detachAllChildren();
     }
@@ -240,11 +257,13 @@ public class ServerMain extends SimpleApplication {
         Serializer.registerClass(UserKeyInputMessage.class);
         Serializer.registerClass(PlayerNodeState.class);
         Serializer.registerClass(RainNodeState.class);
+        Serializer.registerClass(ScoreMessage.class);
     }
     
     private void createMessageListeners() {
         server.addMessageListener(new ServerListener(), UserKeyInputMessage.class);
         server.addMessageListener(new ServerListener(), NewPlayerMessage.class);
+        
     }
 
     
@@ -308,6 +327,7 @@ public class ServerMain extends SimpleApplication {
                 } else if (command.equals(UserKeyInputMessage.KEY_INPUT_RIGHT_STRAFE)) {
                     playerControl.setMovement(PlayerControl.RIGHT, true, inputMessage.isPressed());
                 }
+                
                 System.out.println("Key Pressed: " + inputMessage.getUserCommand() + " on Client #" + source.getId());
             } 
         }

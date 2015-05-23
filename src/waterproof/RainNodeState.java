@@ -35,14 +35,14 @@ public class RainNodeState extends AbstractMessage {
         
         yPos = new float[rainNum];
         velocity = new Vector3f[rainNum];
-        //System.out.println("//-----");
+        System.out.println("//-----");
         for (int i = 0; i < rainNode.getQuantity(); i++) {
             rain = rainNode.getChild(i);
             pos = rain.getLocalTranslation();
             xPos[i] = pos.x;
             yPos[i] = pos.y;
             
-            //System.out.println(pos.x + " , " + pos.y);
+            System.out.println(pos.x + " , " + pos.y);
             
             rainControl = rain.getControl(SeekerControl.class);
             velocity[i] = rainControl.getVector();
