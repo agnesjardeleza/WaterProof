@@ -18,15 +18,15 @@ public class ScoreMessage extends AbstractMessage {
     int score2;
     boolean gameOver = false;
     
-    public ScoreMessage() {
-        
-    }
+    public ScoreMessage() {}
     
     public ScoreMessage(int score1, int score2) {
         this.score1 = score1;
         this.score2 = score2;
     }
-    public ScoreMessage(boolean gameOver) {
+    
+    public ScoreMessage(int score1, int score2, boolean gameOver) {
+        this(score1, score2);
         this.gameOver = gameOver;
     }
 }

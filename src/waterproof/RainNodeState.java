@@ -4,6 +4,7 @@
  */
 package waterproof;
 
+import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 import com.jme3.network.AbstractMessage;
 import com.jme3.network.serializing.Serializable;
@@ -18,7 +19,7 @@ import com.jme3.scene.Spatial;
 public class RainNodeState extends AbstractMessage {
     private float[] xPos;
     private float[] yPos;
-    private Vector3f[] velocity;
+    private float[] rotation;
     private int rainNum;
     
     boolean recreateRainNode;
@@ -34,38 +35,40 @@ public class RainNodeState extends AbstractMessage {
         xPos = new float[rainNum];
         
         yPos = new float[rainNum];
-        velocity = new Vector3f[rainNum];
-        System.out.println("//-----");
+        rotation = new float[rainNum];
+
         for (int i = 0; i < rainNode.getQuantity(); i++) {
             rain = rainNode.getChild(i);
             pos = rain.getLocalTranslation();
             xPos[i] = pos.x;
             yPos[i] = pos.y;
             
-            System.out.println(pos.x + " , " + pos.y);
-            
             rainControl = rain.getControl(SeekerControl.class);
-            velocity[i] = rainControl.getVector();
+            rotation[i] = getAngleFromVector(rainControl.getVector());
         }
         
         this.recreateRainNode = recreateRainNode;
     }
-    public RainNodeState(float[] xPos, float[] yPos, Vector3f[] velocity) {
+    public RainNodeState(float[] xPos, float[] yPos) {
         this.xPos = xPos;
         this.yPos = yPos;
-        this.velocity = velocity;
     }
     
     public Vector3f getPos(int i) {
         return new Vector3f(xPos[i], yPos[i], 0);
     }
     
-    public Vector3f getVector(int i) {
-        return velocity[i];
-    }
     public boolean shouldNodeReset() {
         return recreateRainNode;
     }
     
     public int getRainNum() { return rainNum; }
+    
+    public float getRotation(int i) {
+        return rotation[i];
+    }
+    
+    private float getAngleFromVector(Vector3f velocity) {
+        return new Vector2f(velocity.x, velocity.y).getAngle();
+    }
 }

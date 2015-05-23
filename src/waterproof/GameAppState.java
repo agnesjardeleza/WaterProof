@@ -45,6 +45,7 @@ public class GameAppState extends AbstractAppState implements ActionListener {
     private Hud hud;
     
     public boolean readyForUpdates = false;
+    private boolean gameOver = false;
     
     public GameAppState(AppSettings settings) {
         this.settings = settings;
@@ -67,6 +68,7 @@ public class GameAppState extends AbstractAppState implements ActionListener {
         guiNode.attachChild(rainNode);
         hud = new Hud(assetManager, guiNode, settings.getWidth(), settings.getHeight());
         hud.reset();
+        
         readyForUpdates = true;
         ((ClientMain)app).sendNewPlayerMessage();
         
@@ -77,6 +79,7 @@ public class GameAppState extends AbstractAppState implements ActionListener {
     public void update(float tpf) {
         updatePlayerNode();
         updateRainNode();
+        if (gameOver) hud.endGame();
     }
     
     @Override
@@ -92,76 +95,58 @@ public class GameAppState extends AbstractAppState implements ActionListener {
         ((ClientMain)app).sendUserKeyInputMessage(name, isPressed);
     }
     public synchronized void updateScoreNode(ScoreMessage state) {
-        if(state.gameOver){hud.endGame();}
+        if(state.gameOver){ gameOver = true; }
         else {hud.update(state.score1, state.score2);}
     }
     public synchronized void updatePlayerNode(PlayerNodeState state) {
         if (playerNodeForUpdate == null) playerNodeForUpdate = new Node();
-        if (state.shouldNodeReset()) {
-            playerNodeForUpdate.detachAllChildren();
-            System.out.println("Updating...");
-            for (int i = 0; i < state.getPlayerNum(); i++) {
-                System.out.println(state.getPos(i).x);
-                playerNodeForUpdate.attachChild(createPlayer(state.getPlayerID(i), state.getPos(i), state.getRotation(i), state.getWins(i), state.getLifeStatus(i)));
-            }
-        } else {
-            for (int i = 0; i < state.getPlayerNum(); i++) {
-                updatePlayer(i, state.getPlayerID(i), state.getPos(i), state.getRotation(i));
-            }
+        playerNodeForUpdate.detachAllChildren();
+        for (int i = 0; i < state.getPlayerNum(); i++) {
+            playerNodeForUpdate.attachChild(createPlayer(state.getPlayerID(i), state.getPos(i), state.getRotation(i), state.getWins(i), state.getLifeStatus(i)));
         }
     }
     public synchronized void updateRainNode(RainNodeState state) {
         if (rainNodeForUpdate == null) rainNodeForUpdate = new Node();
-        if (state.shouldNodeReset()) {
-            rainNodeForUpdate.detachAllChildren();
-            System.out.println("Updating...");
-            for (int i = 0; i < state.getRainNum(); i++) {
-                System.out.println(state.getPos(i).x);
-                rainNodeForUpdate.attachChild(createRain(state.getPos(i), state.getVector(i)));
-            }
-        } else {
-            for (int i = 0; i < state.getRainNum(); i++) {
-                updateRain(i, state.getPos(i), state.getVector(i));
-            }
+        rainNodeForUpdate.detachAllChildren();
+        for (int i = 0; i < state.getRainNum(); i++) {
+            rainNodeForUpdate.attachChild(createRain(state.getPos(i), state.getRotation(i)));
         }
     }
+    
     public synchronized void updateRainNode() {
         if (rainNodeForUpdate != null) {
             rainNode.detachAllChildren();
-            for (int i = 0; i < rainNodeForUpdate.getQuantity(); i++) rainNode.attachChild(rainNodeForUpdate.getChild(i).clone());
-            //guiNode.attachChild(playerNode);
-        }
+            
+            for (int i = 0; i < rainNodeForUpdate.getQuantity(); i++) {
+                rainNode.attachChild(rainNodeForUpdate.getChild(i).clone());
+            }
+            int excess = rainNode.getQuantity() - rainNodeForUpdate.getQuantity();
+            for (int i = 0; i < excess; i++) {
+                rainNode.detachChildAt(rainNode.getQuantity() - 1);
+            }
+        }   
     }
     public synchronized void updatePlayerNode() {
         if (playerNodeForUpdate != null) {
             playerNode.detachAllChildren();
             for (int i = 0; i < playerNodeForUpdate.getQuantity(); i++) playerNode.attachChild(playerNodeForUpdate.getChild(i).clone());
-            //guiNode.attachChild(playerNode);
         }
     }
     
     public Spatial createPlayer(int playerID, Vector3f position, float rotation, int wins, boolean lifeStatus) {
-        Spatial newPlayer = getSpatial("Player1");
-        //newPlayer.addControl(new PlayerControl());
-        //newPlayer.getControl(PlayerControl.class).setClientID(playerID);
+        Spatial newPlayer;
+        if (playerID == 0) newPlayer = getSpatial("Player1");
+        else newPlayer = getSpatial("Player2");
         newPlayer.move(position);
         newPlayer.rotate(0, 0, rotation);
-        //newPlayer.getControl(PlayerControl.class).faceTo(rotation);
-        //newPlayer.getControl(PlayerControl.class).setWins(wins);
-        //newPlayer.getControl(PlayerControl.class).setLifeStatus(lifeStatus);
         return newPlayer;
     }
     
-    public Spatial createRain (Vector3f position, Vector3f velocity) {
+    public Spatial createRain (Vector3f position, float rotation) {
         Spatial newRain = getSpatial("Rain");
-        //newPlayer.addControl(new PlayerControl());
-        //newPlayer.getControl(PlayerControl.class).setClientID(playerID);       
-        newRain.rotateUpTo(velocity.normalize());
-        newRain.rotate(0,0,FastMath.PI/2f);
+        //newRain.rotateUpTo(new Vector3f(FastMath.sin(rotation), FastMath.cos(rotation), 0));
+        newRain.rotate(0, 0, rotation);
         newRain.move(position);
-        //newPlayer.getControl(PlayerControl.class).faceTo(rotation);
-        //newPlayer.getControl(PlayerControl.class).setWins(wins);
-        //newPlayer.getControl(PlayerControl.class).setLifeStatus(lifeStatus);
         return newRain;
     }
     

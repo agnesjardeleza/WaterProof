@@ -19,6 +19,7 @@ import com.jme3.scene.control.AbstractControl;
 import com.jme3.scene.control.Control;
 import com.jme3.ui.Picture;
 import java.io.IOException;
+import java.util.Random;
 
 /**
  *
@@ -33,62 +34,51 @@ public class SeekerControl extends AbstractControl {
     private long spawnTime;
     private int screenWidth, screenHeight;    
     public static final String RADIUS = "radius";
+    private float addVelocity;
+    private Vector3f playerDirection;
     
-    public SeekerControl(Spatial player, int screenWidth, int screenHeight) {
+    public SeekerControl(Spatial player, int screenWidth, int screenHeight, float addVelocity) {
         this.player = player;
         velocity = new Vector3f(0,0,0);
         spawnTime = System.currentTimeMillis();  
         this.screenWidth = screenWidth;
         this.screenHeight = screenHeight;
+        
+        if (spawnTime % 45000 < 15000) {
+            playerDirection = new Vector3f(-1, -1, 0);
+        } else if (spawnTime % 45000 < 30000) {
+            playerDirection = new Vector3f(0, -1, 0);
+        } else {
+            playerDirection = new Vector3f(1, -1, 0);
+        }
+        
+        playerDirection.normalizeLocal().multLocal(500f*addVelocity + new Random().nextFloat()*1400);
+        
     }
     @Override
     protected void controlUpdate(float tpf) {
-        //TODO: add code that controls Spatial,
-        //e.g. spatial.rotate(tpf,tpf,tpf);
         if ((Boolean) spatial.getUserData("active")) {
-            Vector3f playerDirection = new Vector3f(-screenWidth/2f,-screenHeight/2f,0);
-            playerDirection.normalizeLocal();
-            playerDirection.multLocal(1500f);
             velocity.addLocal(playerDirection);
             velocity.multLocal(0.8f);
             spatial.move(velocity.mult(tpf*0.1f));
-            
-            if (velocity != Vector3f.ZERO) {
-                spatial.rotateUpTo(velocity.normalize());
-                spatial.rotate(0,0,FastMath.PI/2f);
-            }
         } else {
             long dif = System.currentTimeMillis() - spawnTime;
             if (dif >= 1000f) {
                 spatial.setUserData("active",true);
             }
-            
-            ColorRGBA color = new ColorRGBA(1,1,1,dif/1000f);
-            Node spatialNode = (Node) spatial;
-            Picture pic = (Picture) spatialNode.getChild("Rain");
-            pic.getMaterial().setColor("Color", color);
         }
         Vector3f loc = spatial.getLocalTranslation();
-        if (loc.x > screenWidth + 10 || 
-            loc.y > screenHeight + 10 ||
-            loc.x - 10 < 0 ||
-            loc.y - 10 < 0) {
+        if (loc.y < 0) {
             spatial.removeFromParent();
         }
     }
     
-    public void applyGravity(Vector3f gravity) {
-        velocity.addLocal(gravity);
-    }
     @Override
     protected void controlRender(RenderManager rm, ViewPort vp) {
-        //Only needed for rendering-related operations,
-        //not called when spatial is culled.
     }
     
     public Control cloneForSpatial(Spatial spatial) {
-        SeekerControl control = new SeekerControl(player,screenWidth,screenHeight);
-        //TODO: copy parameters to new Control
+        SeekerControl control = new SeekerControl(player, screenWidth, screenHeight, addVelocity);
         return control;
     }
     

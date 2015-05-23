@@ -42,6 +42,7 @@ public class ClientMain extends SimpleApplication {
             client = Network.connectToServer(ServerMain.APP_HOST_ADDRESS, ServerMain.APP_PORT_NUMBER);
             ServerMain.registerMessageClasses();
             createListeners();
+           
             client.start();
             while(!client.isConnected()) System.out.println("Connecting to server...");
             System.out.println("Connected to server!");
@@ -51,11 +52,11 @@ public class ClientMain extends SimpleApplication {
         
         sound = new Sound(assetManager);
         sound.startMusic();
+        
         inputManager.setMouseCursor((JmeCursor) assetManager.loadAsset("Textures/Pointer.ico"));
         menuAppState = new MainMenuAppState(settings);
         stateManager.attach(menuAppState);
         menuAppState.setEnabled(true);  
-        //addBloom();
         
     }
     
@@ -108,14 +109,10 @@ public class ClientMain extends SimpleApplication {
             if (message instanceof PlayerNodeState) {
                 PlayerNodeState pns = (PlayerNodeState) message;
                 gameAppState.updatePlayerNode(pns);
-            }
-            if (message instanceof RainNodeState) {
+            } else if (message instanceof RainNodeState) {
                 RainNodeState pns = (RainNodeState) message;
                 gameAppState.updateRainNode(pns);
-            }
-            if (message instanceof ScoreMessage) {
-                
-                
+            } else if (message instanceof ScoreMessage) {
                 ScoreMessage pns = (ScoreMessage) message;
                 gameAppState.updateScoreNode(pns);
             }

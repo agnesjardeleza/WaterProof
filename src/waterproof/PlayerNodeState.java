@@ -43,13 +43,12 @@ public class PlayerNodeState extends AbstractMessage {
         rotation = new float[playerNum];
         lifeStatus = new boolean[playerNum];
         wins = new int[playerNum];
-        System.out.println("//-----");
+        
         for (int i = 0; i < playerNode.getQuantity(); i++) {
             player = playerNode.getChild(i);
             pos = player.getLocalTranslation();
             xPos[i] = pos.x;
             yPos[i] = pos.y;
-            System.out.println(pos.x + " , " + pos.y);
             
             playerControl = player.getControl(PlayerControl.class);
             playerID[i] = playerControl.getClientID();

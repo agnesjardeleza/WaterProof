@@ -9,7 +9,6 @@ import com.jme3.export.JmeExporter;
 import com.jme3.export.JmeImporter;
 import com.jme3.export.OutputCapsule;
 import com.jme3.math.FastMath;
-import com.jme3.math.Vector3f;
 import com.jme3.renderer.RenderManager;
 import com.jme3.renderer.ViewPort;
 import com.jme3.scene.Spatial;
@@ -37,6 +36,7 @@ public class PlayerControl extends AbstractControl {
     public static final int DOWN = 2;
     public static final int RIGHT = 3;
     public static final int STRAFE = 4;
+    public static final int STOP = 5;
     public static final float FACE_UP = FastMath.PI/2;
     public static final float FACE_LEFT = FastMath.PI;
     public static final float FACE_RIGHT = 0;
@@ -50,8 +50,14 @@ public class PlayerControl extends AbstractControl {
     private static final float speed = 800f;
     
     public void setMovement(int moveDirection, boolean strafe, boolean motion) {
-        moveArray[moveDirection] = motion;
-        moveArray[STRAFE] = strafe;
+        if (moveDirection == STOP) {
+            for (int i = 0; i < moveArray.length; i++) {
+                moveArray[i] = false;
+            }
+        } else {
+            moveArray[moveDirection] = motion;
+            moveArray[STRAFE] = strafe;
+        }
     }
     
     public void initializeData(int clientID) {

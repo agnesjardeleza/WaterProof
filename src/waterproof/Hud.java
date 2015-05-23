@@ -80,14 +80,17 @@ public class Hud {
         }
         updateHUD();
     }
+    
     public boolean checkScores() {
         if(player1score < 3 && player2score < 3) {return false;}        
         return true;
     }
+    
     private void updateHUD() {
         livesText.setText("Player 1: "+player1score);
         scoreText.setText("Player 2: "+player2score);
     }
+    
     public void update(int player1, int player2) {
         player1score = player1;
         player2score = player2;
